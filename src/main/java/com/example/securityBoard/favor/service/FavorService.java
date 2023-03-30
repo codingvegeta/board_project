@@ -10,6 +10,7 @@ import com.example.securityBoard.member.entity.Client;
 import com.example.securityBoard.member.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,9 +22,10 @@ public class FavorService {
     private final BoardRepository boardRepository;
     private final FavorRepository favorRepository;
 
+    @Transactional
     public String addFavor(ClientAdapter clientAdapter, Long boardId) {
-        Client client = clientRepository.findById(clientAdapter.getClient().getId()).orElseThrow(() -> new IllegalStateException("존재하지 않는 사용자 입니다."));
-        Board board = boardRepository.findById(boardId).orElseThrow(() -> new IllegalStateException("존재하지 않는 게시물 입니다."));
+        Client client = getClient(clientAdapter);
+        Board board = getBoard(boardId);
 
         Favor findFavor = favorRepository.findByClient_IdAndBoard_Id(client.getId(), boardId);
         if (findFavor != null) {
@@ -33,6 +35,17 @@ public class FavorService {
         Favor favor = Favor.addFavor(client, board);
         favorRepository.save(favor);
         return "좋아요를 눌렀습니다.";
+    }
+
+    @Transactional
+    public Board getBoard(Long boardId) {
+        return boardRepository.findById(boardId).orElseThrow(() -> new IllegalStateException("존재하지 않는 게시물 입니다."));
+    }
+
+    @Transactional
+    public Client getClient(ClientAdapter clientAdapter) {
+        Client client = clientRepository.findById(clientAdapter.getClient().getId()).orElseThrow(() -> new IllegalStateException("존재하지 않는 사용자 입니다."));
+        return client;
     }
 
     public List<FavorClientResponseDto> findClientFavor(String accountId) {
